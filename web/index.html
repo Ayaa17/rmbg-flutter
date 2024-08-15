@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+  <title>Remove Portrait Background</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script>
+        let inputSize = 512;
+        let pixelSize = 3;
+
+        async function callJsFunction(url) {
+            let img = new Image();
+            img.src = url;
+            img.crossOrigin = "anonymous";
+            img.onload = async () => {
+                try {
+                    let model = await tf.loadGraphModel('model.json');
+                    let tensor = tf.browser.fromPixels(img);
+                    tensor = tensor.resizeBilinear([inputSize, inputSize]);
+                    tensor = tensor.expandDims(0);
+                    tensor = tensor.div(tf.scalar(255.0));
+
+                    const prediction = model.predict(tensor);
+                    const values = prediction.dataSync();
+                    const result = values;
+                    window.parent.postMessage(result, '*');
+                } catch (error) {
+                    console.error("Error loading model or making prediction:", error);
+                }
+            };
+        }
+
+        function setupMessageListener(callback) {
+            window.addEventListener('message', (event) => {
+                callback(event.data);
+            });
+        }
+    </script>
+</head>
+<body>
+    <script src="main.dart.js" type="application/javascript"></script>
+</body>
+</html>
